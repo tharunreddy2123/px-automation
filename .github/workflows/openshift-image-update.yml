@@ -1,58 +1,12 @@
-name: OpenShift Image Upgrade
+name: Test Workflow
 
 on:
   workflow_dispatch:
-    inputs:
-      imageTag:
-        description: "New Image Tag"
-        required: true
-        default: "1.27.2"
 
 jobs:
-  deploy:
+  hello:
     runs-on: ubuntu-latest
 
-    env:
-      OPENSHIFT_SERVER: ${{ secrets.OPENSHIFT_SERVER }}
-      OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
-      OPENSHIFT_NAMESPACE: ${{ secrets.OPENSHIFT_NAMESPACE }}
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install OpenShift CLI
-        run: |
-          curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
-          tar -xzf oc.tar.gz
-          sudo mv oc /usr/local/bin/
-          oc version --client
-
-      - name: Login to OpenShift
-        run: |
-          oc login \
-            --token="${OPENSHIFT_TOKEN}" \
-            --server="${OPENSHIFT_SERVER}" \
-            --insecure-skip-tls-verify=true
-
-      - name: Select Namespace
-        run: |
-          oc project "${OPENSHIFT_NAMESPACE}"
-
-      - name: Show Current Image
-        run: |
-          oc get deployment nginx-app \
-          -n "${OPENSHIFT_NAMESPACE}" \
-          -o=jsonpath='{.spec.template.spec.containers[0].image}'
-
-      - name: Update Image
-        run: |
-          oc set image deployment/nginx-app \
-          nginx=nginxinc/nginx-unprivileged:${{ github.event.inputs.imageTag }} \
-          -n "${OPENSHIFT_NAMESPACE}"
-
-      - name: Wait for Rollout
-        run: |
-          oc rollout status deployment/nginx-app \
-          -n "${OPENSHIFT_NAMESPACE}" \
-          --timeout=180s
+      - name: Say Hello
+        run: echo "Hello from GitHub Actions!"
