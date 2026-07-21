@@ -1,0 +1,15 @@
+*.pyc
+
+__pycache__/
+
+.env
+
+.vscode/
+
+.idea/
+
+oc.tar.gz
+
+oc
+
+*.log
