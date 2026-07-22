@@ -18,7 +18,8 @@ jobs:
       OPENSHIFT_NAMESPACE: ${{ secrets.OPENSHIFT_NAMESPACE }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Install OpenShift CLI
         run: |
@@ -27,14 +28,55 @@ jobs:
           sudo mv oc /usr/local/bin/
           oc version --client
 
-      - name: Login
+      - name: Login to OpenShift
         run: |
           oc login \
             --token="$OPENSHIFT_TOKEN" \
             --server="$OPENSHIFT_SERVER"
 
-      - name: Verify
+      - name: Select Project
         run: |
-          oc whoami
           oc project "$OPENSHIFT_NAMESPACE"
-          oc get deployment
+
+      - name: Current Image
+        run: |
+          echo "Current Image:"
+          oc get deployment nginx-app \
+          -o jsonpath='{.spec.template.spec.containers[0].image}'
+          echo ""
+
+      - name: Update Image
+        run: |
+          oc set image deployment/nginx-app \
+          nginx=nginxinc/nginx-unprivileged:${{ github.event.inputs.imageTag }}
+
+      - name: Verify Rollout
+        run: |
+          oc rollout status deployment/nginx-app --timeout=120s
+
+      - name: Show Updated Image
+        run: |
+          echo "Updated Image:"
+          oc get deployment nginx-app \
+          -o jsonpath='{.spec.template.spec.containers[0].image}'
+          echo ""
+
+      - name: Email Success
+        if: success()
+        run: |
+          echo "Deployment upgraded successfully to version ${{ github.event.inputs.imageTag }}"
+
+      - name: Rollback
+        if: failure()
+        run: |
+          oc rollout undo deployment/nginx-app
+
+      - name: Verify Rollback
+        if: failure()
+        run: |
+          oc rollout status deployment/nginx-app
+
+      - name: Email Failure
+        if: failure()
+        run: |
+          echo "Deployment failed. Rollback completed."
