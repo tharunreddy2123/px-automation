@@ -2,9 +2,14 @@ name: OpenShift Image Upgrade
 
 on:
   workflow_dispatch:
+    inputs:
+      imageTag:
+        description: "Image Tag"
+        required: true
+        default: "1.27.2"
 
 jobs:
-  login:
+  deploy:
     runs-on: ubuntu-latest
 
     env:
@@ -13,8 +18,7 @@ jobs:
       OPENSHIFT_NAMESPACE: ${{ secrets.OPENSHIFT_NAMESPACE }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install OpenShift CLI
         run: |
@@ -23,26 +27,14 @@ jobs:
           sudo mv oc /usr/local/bin/
           oc version --client
 
-      - name: Login to OpenShift
+      - name: Login
         run: |
           oc login \
             --token="$OPENSHIFT_TOKEN" \
             --server="$OPENSHIFT_SERVER"
 
-      - name: Select Namespace
+      - name: Verify
         run: |
-          oc project "$OPENSHIFT_NAMESPACE"
-
-      - name: Verify Connection
-        run: |
-          echo "Current User:"
           oc whoami
-
-          echo "Current Project:"
-          oc project
-
-          echo "Deployments:"
+          oc project "$OPENSHIFT_NAMESPACE"
           oc get deployment
-
-          echo "Pods:"
-          oc get pods
