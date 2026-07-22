@@ -1,13 +1,15 @@
-name: GitHub Test
+name: OpenShift Image Upgrade
 
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: echo "Hello"
+      - name: Workflow Started
+        run: |
+          echo "Workflow started successfully"
